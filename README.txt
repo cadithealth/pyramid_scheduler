@@ -23,9 +23,9 @@ should probably not be used in production:
 
 Install:
 
-``
+```
 $ pip install pyramid-scheduler
-``
+```
 
 Use:
 
