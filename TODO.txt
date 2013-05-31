@@ -1,0 +1,6 @@
+* generate API documentation with sphinx
+* if pyramid_exclog is installed, make use of it
+* make the sqlalchemy kombu driver clean up old messages
+* make kombu sqlalchemy backend use a provided session and not auto-commit
+* make kombu sqlalchemy backend, if psycopg2 engine, use LISTEN/NOTIFY
+* submit a patch to APS that allows them to use non-naive datetime objects
