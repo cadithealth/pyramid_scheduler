@@ -67,7 +67,7 @@ requires = [
 
 setup(
   name                  = 'pyramid_scheduler',
-  version               = '0.2.1',
+  version               = '0.2.2',
   description           = 'A pyramid plugin that allows asynchronous and deferred task scheduling and management.',
   long_description      = README,
   classifiers           = [
@@ -98,7 +98,11 @@ setup(
   install_requires      = requires,
   tests_require         = test_requires,
   test_suite            = 'pyramid_scheduler',
-  entry_points          = '',
+  entry_points          = {
+    'console_scripts': [
+      'pscheduler = pyramid_scheduler.pscheduler:main',
+    ],
+  },
   license               = 'MIT (http://opensource.org/licenses/MIT)',
   )
 
