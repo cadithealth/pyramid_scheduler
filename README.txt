@@ -43,7 +43,7 @@ Use:
 # enabling the plugin adds a `scheduler` attribute to the registry
 def main(global_config, **settings):
   # ... (the usual pyramid startup calls) ...
-  config.include('pyramid-scheduler)
+  config.include('pyramid_scheduler)
 
 # create an asynchronous task
 def slow_process(name, id):
