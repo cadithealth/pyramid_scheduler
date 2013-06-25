@@ -136,7 +136,7 @@ def main():
     app = get_app(options.configUri, name=options.appName)
     if not hasattr(app.registry, 'scheduler'):
       log.error('application did not load a scheduler (try'
-                ' "config.include(\'pyramid-scheduler\')") - aborting')
+                ' "config.include(\'pyramid_scheduler\')") - aborting')
       return 10
     if options.message:
       with transaction.manager:

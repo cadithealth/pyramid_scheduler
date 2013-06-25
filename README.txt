@@ -157,7 +157,7 @@ setup.py develop``.
 Then, enable the package either in your INI file via:
 
 ```
-pyramid.includes = pyramid-scheduler
+pyramid.includes = pyramid_scheduler
 ```
 
 or in code in your package's application initialization via:
@@ -165,7 +165,7 @@ or in code in your package's application initialization via:
 ``` python
 def main(global_config, **settings):
   # ...
-  config.include('pyramid-scheduler')
+  config.include('pyramid_scheduler')
   # ...
 ```
 
