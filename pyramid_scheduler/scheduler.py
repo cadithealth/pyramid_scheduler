@@ -13,11 +13,12 @@ The pyramid-scheduler scheduling service.
 
 import time, datetime, logging
 import transaction
+from contextlib import contextmanager
 import apscheduler, apscheduler.scheduler, apscheduler.events
 from pyramid.settings import asbool, aslist
 from apscheduler.jobstores.ram_store import RAMJobStore
 from apscheduler.util import combine_opts, ref_to_obj, obj_to_ref
-from .util import adict, asdur, addPrefix, makeID, cull, now, ts2dt, dt2ts
+from .util import adict, asdur, addPrefix, makeID, cull, now, ts2dt, dt2ts, resolve
 from . import api, broker
 
 log = logging.getLogger(__name__)
@@ -48,12 +49,13 @@ class Scheduler(object):
   registry = dict()
 
   #----------------------------------------------------------------------------
-  def __init__(self, settings=None, **kw):
+  def __init__(self, settings=None, appreg=None, **kw):
     self._listeners = []
     self.id         = None
     self.conf       = adict()
     self.aps        = None
     self.ramstore   = 'internal.transient.' + makeID()
+    self.appreg     = appreg
     if settings is not None:
       self.configure(settings, **kw)
 
@@ -62,6 +64,7 @@ class Scheduler(object):
     self.confdict = conf = combine_opts(settings, prefix)
     self.conf.combined     = asbool(conf.get('combined', True))
     self.conf.housekeeping = asdur(conf.get('housekeeping', '24h'))
+    self.conf.hkpostcall   = resolve(conf.get('housekeeping.append', None))
     self.conf.queues       = aslist(conf.get('queues', ''))
     self.conf.grace        = int(conf.get('misfire_grace_time', 1))
     self.id                = conf.get('id', ';'.join(self.conf.queues))
@@ -295,17 +298,38 @@ class Scheduler(object):
       self._notify(api.Event(api.Event.JOB_CANCELED, job=apsjob))
 
   #----------------------------------------------------------------------------
+  @contextmanager
+  def _threadContext(self):
+    # IMPORTANT: this assumes that APScheduler invokes jobs in a separate
+    #            thread per job (as documented)...
+    # TODO: this needs confirmation!
+    if self.appreg is None:
+      yield
+    else:
+      from pyramid.threadlocal import manager
+      reg = dict(manager.get())
+      reg['registry'] = self.appreg
+      manager.push(reg)
+      try:
+        yield
+      finally:
+        manager.pop()
+
+  #----------------------------------------------------------------------------
   def _runJob(self, jobID, task):
-    # TODO: ensure proper transaction handling
-    with transaction.manager:
-      func = ref_to_obj(task.func)
-      func(*task.args or [], **task.kwargs or {})
+    with self._threadContext():
+      # TODO: ensure proper transaction handling
+      with transaction.manager:
+        func = ref_to_obj(task.func)
+        func(*task.args or [], **task.kwargs or {})
 
   #----------------------------------------------------------------------------
   def _housekeeping(self):
-    # TODO: do housekeeping:
-    #         - delete old kombu messages (can't they be auto-delete???)
-    pass
+    with self._threadContext():
+      # TODO: do housekeeping:
+      #         - delete old kombu messages (can't they be auto-delete???)
+      if self.conf.hkpostcall:
+        self.conf.hkpostcall()
 
   #----------------------------------------------------------------------------
   def add_async_job(self, func, args=None, kwargs=None, queue=None, **options):

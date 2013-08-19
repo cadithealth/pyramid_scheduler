@@ -18,7 +18,10 @@ from .scheduler import Scheduler
 
 #------------------------------------------------------------------------------
 def includeme(config):
-  config.registry.scheduler = Scheduler(config.registry.settings)
+  config.registry.scheduler = Scheduler(
+    settings = config.registry.settings,
+    appreg   = config.registry,
+    )
   config.registry.scheduler.startProducer()
   # todo: there *must* be a better way of determining whether or not i am
   #       in an env where i should start the consumer...

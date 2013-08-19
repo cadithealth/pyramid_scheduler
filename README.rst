@@ -41,6 +41,7 @@ Use:
   #   scheduler.broker.url = %(dburl)s      ## the URL used for kombu messaging
   #   ## other optional settings:
   #   ##   scheduler.housekeeping
+  #   ##   scheduler.housekeeping.append
   #   ##   scheduler.jobstore.default.class
   #   ##   scheduler.misfire_grace_time
   
@@ -187,6 +188,7 @@ TODO: add documentation
 * scheduler.queues
 * scheduler.broker.url
 * scheduler.housekeeping
+* scheduler.housekeeping.append
 * scheduler.jobstore.default.class
 * scheduler.misfire_grace_time
 
