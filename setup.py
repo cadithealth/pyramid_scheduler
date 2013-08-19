@@ -21,40 +21,6 @@ try:
 except IOError:
   README = ''
 
-#------------------------------------------------------------------------------
-# ugh. why couldn't github just have supported rst??? ignats.
-#------------------------------------------------------------------------------
-mdheader = re.compile('^(#+) (.*)$', flags=re.MULTILINE)
-mdlevels = '=-~+"\''
-def hdrepl(match):
-  lvl = len(match.group(1)) - 1
-  if lvl < 0:
-    lvl = 0
-  if lvl >= len(mdlevels):
-    lvl = len(mdlevels) - 1
-  ret = match.group(2).strip()
-  return ret + '\n' + ( mdlevels[lvl] * len(ret) ) + '\n'
-#------------------------------------------------------------------------------
-mdquote = re.compile('^```( python)?\n(.*?)\n```\n', flags=re.MULTILINE|re.DOTALL)
-def qtrepl(match):
-  if match.group(1) == ' python':
-    ret = '.. code-block:: python\n'
-  else:
-    ret = '::\n'
-  for line in match.group(2).split('\n'):
-    if len(line.strip()) <= 0:
-      ret += '\n'
-    else:
-      ret += '\n  ' + line
-  return ret + '\n'
-#------------------------------------------------------------------------------
-def md2rst(text):
-  text = mdquote.sub(qtrepl, text)
-  text = mdheader.sub(hdrepl, text)
-  return text
-#------------------------------------------------------------------------------
-README = md2rst(README)
-
 test_requires = [
   'nose                 >= 1.2.1',
   'coverage             >= 3.5.3',
@@ -71,7 +37,6 @@ setup(
   description           = 'A pyramid plugin that allows asynchronous and deferred task scheduling and management.',
   long_description      = README,
   classifiers           = [
-    'Development Status :: 4 - Beta',
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',
     'Programming Language :: Python',

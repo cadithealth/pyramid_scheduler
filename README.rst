@@ -1,4 +1,6 @@
-# pyramid_scheduler
+=================
+pyramid_scheduler
+=================
 
 The ``pyramid-scheduler`` package is a pyramid plugin that allows
 asynchronous and deferred task scheduling and management. It uses
@@ -19,54 +21,56 @@ should probably not be used in production:
   before the JOB_EXECUTED event for a deferred job.
 
 
-## TL;DR
+TL;DR
+=====
 
 Install:
 
-```
-$ pip install pyramid-scheduler
-```
+.. code-block:: bash
+
+  $ pip install pyramid-scheduler
 
 Use:
 
-``` python
-# ini file settings:
-#   [app:main]
-#   scheduler.combined   = true | false   ## should execution be in-process?
-#   scheduler.queues     = jobs           ## space-separated list of queues
-#   scheduler.broker.url = %(dburl)s      ## the URL used for kombu messaging
-#   ## other optional settings:
-#   ##   scheduler.housekeeping
-#   ##   scheduler.jobstore.default.class
-#   ##   scheduler.misfire_grace_time
+.. code-block:: python
 
-# enabling the plugin adds a `scheduler` attribute to the registry
-def main(global_config, **settings):
-  # ... (the usual pyramid startup calls) ...
-  config.include('pyramid_scheduler)
+  # ini file settings:
+  #   [app:main]
+  #   scheduler.combined   = true | false   ## should execution be in-process?
+  #   scheduler.queues     = jobs           ## space-separated list of queues
+  #   scheduler.broker.url = %(dburl)s      ## the URL used for kombu messaging
+  #   ## other optional settings:
+  #   ##   scheduler.housekeeping
+  #   ##   scheduler.jobstore.default.class
+  #   ##   scheduler.misfire_grace_time
+  
+  # enabling the plugin adds a `scheduler` attribute to the registry
+  def main(global_config, **settings):
+    # ... (the usual pyramid startup calls) ...
+    config.include('pyramid_scheduler)
+  
+  # create an asynchronous task
+  def slow_process(name, id):
+    # ...a slow asynchronous job...
+  def handle_request_quickly(request):
+    request.registry.scheduler.add_async_job(slow_process, args=('my-first-arg', 2))
+  
+  # schedule a deferred task for one hour from now
+  def delayed_process():
+    # ...something that should happen later...
+  def handle_request_now(request):
+    import time
+    request.registry.scheduler.add_date_job(delayed_process, time.time() + 3600)
+  
+  # do something every 10 minutes
+  def interval_process(reason=None):
+    # ...gets executed every 10 minutes with an optional reason...
+  def handle_request_often(request):
+    request.registry.scheduler.add_date_job(interval_process, minutes=10)
 
-# create an asynchronous task
-def slow_process(name, id):
-  # ...a slow asynchronous job...
-def handle_request_quickly(request):
-  request.registry.scheduler.add_async_job(slow_process, args=('my-first-arg', 2))
 
-# schedule a deferred task for one hour from now
-def delayed_process():
-  # ...something that should happen later...
-def handle_request_now(request):
-  import time
-  request.registry.scheduler.add_date_job(delayed_process, time.time() + 3600)
-
-# do something every 10 minutes
-def interval_process(reason=None):
-  # ...gets executed every 10 minutes with an optional reason...
-def handle_request_often(request):
-  request.registry.scheduler.add_date_job(interval_process, minutes=10)
-```
-
-
-## Concepts
+Concepts
+========
 
 The pyramid-scheduler package refers to asynchronous or deferred tasks
 to be managed as "jobs" and these fall into the following categories:
@@ -141,13 +145,14 @@ limitations found in the celery API and shortcomings in the actual
 implementation.
 
 
-## Installation
+Installation
+============
 
 You can manually install it by running:
 
-```
-$ pip install pyramid-scheduler
-```
+.. code-block:: bash
+
+  $ pip install pyramid-scheduler
 
 However, a better approach is to use standard python distribution
 utilities, and add pyramid-scheduler as a dependency in your project's
@@ -156,21 +161,22 @@ setup.py develop``.
 
 Then, enable the package either in your INI file via:
 
-```
-pyramid.includes = pyramid_scheduler
-```
+.. code-block:: text
+
+  pyramid.includes = pyramid_scheduler
 
 or in code in your package's application initialization via:
 
-``` python
-def main(global_config, **settings):
-  # ...
-  config.include('pyramid_scheduler')
-  # ...
-```
+.. code-block:: python
+
+  def main(global_config, **settings):
+    # ...
+    config.include('pyramid_scheduler')
+    # ...
 
 
-## Configuration
+Configuration
+=============
 
 The following configuration options (placed in the "[app:main]"
 section of your INI file):
@@ -185,7 +191,8 @@ TODO: add documentation
 * scheduler.misfire_grace_time
 
 
-## Background daemon
+Background Daemon
+=================
 
 TODO: add documentation
 
