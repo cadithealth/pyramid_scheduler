@@ -32,7 +32,7 @@ requires = [
 
 setup(
   name                  = 'pyramid_scheduler',
-  version               = '0.2.2',
+  version               = '0.2.3',
   description           = 'A pyramid plugin that allows asynchronous and deferred task scheduling and management.',
   long_description      = read('README.rst'),
   classifiers           = [
