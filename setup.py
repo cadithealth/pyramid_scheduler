@@ -7,8 +7,8 @@
 # copy: (C) Copyright 2013 Cadit Inc., see LICENSE.txt
 #------------------------------------------------------------------------------
 
-import os, sys, re
-from setuptools import setup, find_packages
+import os, sys, setuptools
+from setuptools import setup
 
 # require python 2.7+
 assert(sys.version_info[0] > 2
@@ -16,10 +16,9 @@ assert(sys.version_info[0] > 2
        and sys.version_info[1] >= 7)
 
 here = os.path.abspath(os.path.dirname(__file__))
-try:
-  README = open(os.path.join(here, 'README.rst')).read()
-except IOError:
-  README = ''
+def read(*parts):
+  try:    return open(os.path.join(here, *parts)).read()
+  except: return ''
 
 test_requires = [
   'nose                 >= 1.2.1',
@@ -35,7 +34,7 @@ setup(
   name                  = 'pyramid_scheduler',
   version               = '0.2.2',
   description           = 'A pyramid plugin that allows asynchronous and deferred task scheduling and management.',
-  long_description      = README,
+  long_description      = read('README.rst'),
   classifiers           = [
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',
@@ -57,7 +56,7 @@ setup(
   author_email          = 'oss@cadit.com',
   url                   = 'http://github.com/cadithealth/pyramid_scheduler',
   keywords              = 'web wsgi pyramid asynchronous task scheduling management scheduler',
-  packages              = find_packages(),
+  packages              = setuptools.find_packages(),
   include_package_data  = True,
   zip_safe              = True,
   install_requires      = requires,
