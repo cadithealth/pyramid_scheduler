@@ -17,7 +17,7 @@ assert(sys.version_info[0] > 2
 
 here = os.path.abspath(os.path.dirname(__file__))
 try:
-  README = open(os.path.join(here, 'README.txt')).read()
+  README = open(os.path.join(here, 'README.rst')).read()
 except IOError:
   README = ''
 
