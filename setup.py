@@ -8,50 +8,59 @@
 #------------------------------------------------------------------------------
 
 import os, sys, setuptools
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # require python 2.7+
-assert(sys.version_info[0] > 2
-       or sys.version_info[0] == 2
-       and sys.version_info[1] >= 7)
+if sys.hexversion < 0x02070000:
+  raise RuntimeError('This package requires python 2.7 or better')
 
-here = os.path.abspath(os.path.dirname(__file__))
-def read(*parts):
-  try:    return open(os.path.join(here, *parts)).read()
-  except: return ''
+heredir = os.path.abspath(os.path.dirname(__file__))
+def read(*parts, **kw):
+  try:    return open(os.path.join(heredir, *parts)).read()
+  except: return kw.get('default', '')
 
-test_requires = [
-  'nose                 >= 1.2.1',
+test_dependencies = [
+  'nose                 >= 1.3.0',
   'coverage             >= 3.5.3',
   ]
 
-requires = [
+dependencies = [
   'pyramid              >= 1.4',
   'distribute           >= 0.6.24',
+  'APScheduler          >= 2.1.0',
+  'kombu                >= 2.5.10',
+  ]
+
+entrypoints = {
+  'console_scripts': [
+    'pscheduler         = pyramid_scheduler.pscheduler:main',
+    ],
+  }
+
+classifiers = [
+  'Development Status :: 5 - Production/Stable',
+  'Intended Audience :: Developers',
+  'Programming Language :: Python',
+  'Framework :: Pyramid',
+  'Environment :: Console',
+  'Environment :: Web Environment',
+  'Operating System :: OS Independent',
+  'Topic :: Internet',
+  'Topic :: Software Development',
+  'Topic :: Internet :: WWW/HTTP',
+  'Topic :: Internet :: WWW/HTTP :: WSGI',
+  'Topic :: Software Development :: Libraries :: Application Frameworks',
+  'Natural Language :: English',
+  'License :: OSI Approved :: MIT License',
+  'License :: Public Domain',
   ]
 
 setup(
   name                  = 'pyramid_scheduler',
-  version               = '0.2.3',
+  version               = read('VERSION.txt', default='0.0.1').strip(),
   description           = 'A pyramid plugin that allows asynchronous and deferred task scheduling and management.',
   long_description      = read('README.rst'),
-  classifiers           = [
-    'Development Status :: 5 - Production/Stable',
-    'Intended Audience :: Developers',
-    'Programming Language :: Python',
-    'Framework :: Pyramid',
-    'Environment :: Console',
-    'Environment :: Web Environment',
-    'Operating System :: OS Independent',
-    'Topic :: Internet',
-    'Topic :: Software Development',
-    'Topic :: Internet :: WWW/HTTP',
-    'Topic :: Internet :: WWW/HTTP :: WSGI',
-    'Topic :: Software Development :: Libraries :: Application Frameworks',
-    'Natural Language :: English',
-    'License :: OSI Approved :: MIT License',
-    'License :: Public Domain',
-    ],
+  classifiers           = classifiers,
   author                = 'Philip J Grabner, Cadit Health Inc',
   author_email          = 'oss@cadit.com',
   url                   = 'http://github.com/cadithealth/pyramid_scheduler',
@@ -59,14 +68,10 @@ setup(
   packages              = setuptools.find_packages(),
   include_package_data  = True,
   zip_safe              = True,
-  install_requires      = requires,
-  tests_require         = test_requires,
+  install_requires      = dependencies,
+  tests_require         = test_dependencies,
   test_suite            = 'pyramid_scheduler',
-  entry_points          = {
-    'console_scripts': [
-      'pscheduler = pyramid_scheduler.pscheduler:main',
-    ],
-  },
+  entry_points          = entrypoints,
   license               = 'MIT (http://opensource.org/licenses/MIT)',
   )
 
