@@ -1,5 +1,4 @@
 *.py[cod]
-.virtualenv
 
 # C extensions
 *.so
@@ -34,4 +33,6 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
-devenv
+
+envdev*
+.virtualenv*
