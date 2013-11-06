@@ -1,0 +1,4 @@
+include *.txt *.ini *.cfg *.rst *.json *.yaml
+recursive-include TODO:PROJNAME *.ico *.png *.gif *.jpg
+recursive-include TODO:PROJNAME *.less *.css *.js *.html *.pt *.mak *.mako
+recursive-include TODO:PROJNAME *.json *.yaml *.xml
