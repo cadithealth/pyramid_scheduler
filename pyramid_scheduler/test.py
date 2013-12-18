@@ -16,6 +16,7 @@ import uuid
 import webtest
 import time
 import threading
+import kombu.transport.sqlalchemy.models as ksam
 from kombu.transport.sqlalchemy.models import metadata, Queue, Message
 from pyramid.config import Configurator
 from pyramid.response import Response
@@ -56,6 +57,12 @@ class TestScheduler(unittest.TestCase):
     klass.masterdb_path = fp.name
     fp.close()
     engine = sa.create_engine('sqlite:///' + klass.masterdb_path)
+    # kombu 3.0.8 compat
+    if hasattr(ksam, 'class_registry'):
+      class Queue(ksam.Queue, ksam.ModelBase):
+        __tablename__ = 'kombu_queue'
+      class Message(ksam.Message, ksam.ModelBase):
+        __tablename__ = 'kombu_message'
     metadata.create_all(engine)
     # todo: any other default things?...
     # TODO: this is a hack. fix! for some reason, when auto-inserting the
@@ -106,7 +113,7 @@ class TestScheduler(unittest.TestCase):
     self.assertEqual(res.body, '{"value": "' + val + '"}')
 
   #----------------------------------------------------------------------------
-  def test_newKombuSerializerDefault(self):
+  def test_kombu308_newSerializerDefault(self):
     self.initApp()
     self.assertEqual(storedData, [])
     val = str(uuid.uuid4())

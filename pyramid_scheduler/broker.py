@@ -27,7 +27,11 @@ class KombuWorker(ConsumerMixin):
     self.engine     = engine
     self.connection = connection
   def get_consumers(self, Consumer, channel):
-    return [Consumer(queues=self.engine.queues, callbacks=[self.event])]
+    return [Consumer(
+      queues    = self.engine.queues,
+      callbacks = [self.event],
+      accept    = ['pickle'],
+      )]
   def event(self, event, message):
     log.debug('received message: %r', event)
     self.engine.scheduler._handleEvent(event)
