@@ -22,6 +22,8 @@ def read(*parts, **kw):
 test_dependencies = [
   'nose                 >= 1.3.0',
   'coverage             >= 3.5.3',
+  'WebTest              >= 1.4.0',
+  'SQLAlchemy           >= 0.8.2',
   ]
 
 dependencies = [
@@ -29,6 +31,7 @@ dependencies = [
   'distribute           >= 0.6.24',
   'APScheduler          >= 2.1.0',
   'kombu                >= 2.5.10',
+  'transaction          >= 1.4.1',
   ]
 
 entrypoints = {
