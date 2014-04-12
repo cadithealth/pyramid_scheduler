@@ -24,7 +24,7 @@ test_dependencies = [
   'coverage             >= 3.5.3',
   'WebTest              >= 1.4.0',
   'SQLAlchemy           >= 0.8.2',
-  ]
+]
 
 dependencies = [
   'pyramid              >= 1.4',
@@ -32,13 +32,14 @@ dependencies = [
   'APScheduler          >= 2.1.0',
   'kombu                >= 2.5.10',
   'transaction          >= 1.4.1',
-  ]
+  'six                  >= 1.6.1',
+]
 
 entrypoints = {
   'console_scripts': [
     'pscheduler         = pyramid_scheduler.pscheduler:main',
-    ],
-  }
+  ],
+}
 
 classifiers = [
   'Development Status :: 5 - Production/Stable',
@@ -56,7 +57,7 @@ classifiers = [
   'Natural Language :: English',
   'License :: OSI Approved :: MIT License',
   'License :: Public Domain',
-  ]
+]
 
 setup(
   name                  = 'pyramid_scheduler',
@@ -76,7 +77,7 @@ setup(
   test_suite            = 'pyramid_scheduler',
   entry_points          = entrypoints,
   license               = 'MIT (http://opensource.org/licenses/MIT)',
-  )
+)
 
 #------------------------------------------------------------------------------
 # end of $Id$
