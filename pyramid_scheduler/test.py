@@ -94,7 +94,7 @@ class TestScheduler(unittest.TestCase):
       'scheduler.combined'    : 'true',
       'scheduler.queues'      : 'test-queue',
       'scheduler.broker.url'  : 'kombu.transport.sqlalchemy:Transport+' + self.dburl,
-      }
+    }
     appset.update(settings or {})
     self.app     = ReflectorApp(settings=appset)
     self.testapp = webtest.TestApp(self.app)
@@ -107,10 +107,10 @@ class TestScheduler(unittest.TestCase):
   def test_testapp(self):
     self.initApp()
     res = self.testapp.get('/reflect/params/?hello=world')
-    self.assertEqual(res.body, '{"hello": "world"}')
+    self.assertEqual(res.body, b'{"hello": "world"}')
     val = str(uuid.uuid4())
     res = self.testapp.get('/reflect/params/?value=' + val)
-    self.assertEqual(res.body, '{"value": "' + val + '"}')
+    self.assertEqual(res.body, b'{"value": "' + val.encode('ascii') + b'"}')
 
   #----------------------------------------------------------------------------
   def test_kombu308_newSerializerDefault(self):
@@ -118,7 +118,7 @@ class TestScheduler(unittest.TestCase):
     self.assertEqual(storedData, [])
     val = str(uuid.uuid4())
     res = self.testapp.get('/store/?val=' + val)
-    self.assertEqual(res.body, 'ok')
+    self.assertEqual(res.body, b'ok')
     with storedDataCond:
       if not storedData:
         storedDataCond.wait(timeout=3)

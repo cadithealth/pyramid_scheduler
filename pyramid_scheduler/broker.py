@@ -16,6 +16,8 @@ implementation uses `kombu` as the underlying engine.
 import time, logging, threading
 import kombu, kombu.pools, kombu.common
 from kombu.mixins import ConsumerMixin
+import six
+
 from . import api
 from .util import adict
 
@@ -31,7 +33,7 @@ class KombuWorker(ConsumerMixin):
       queues    = self.engine.queues,
       callbacks = [self.event],
       accept    = ['pickle'],
-      )]
+    )]
   def event(self, event, message):
     log.debug('received message: %r', event)
     self.engine.scheduler._handleEvent(event)
@@ -49,10 +51,15 @@ class Engine(object):
       kombu.Queue(queue, exchange=self.exchange, routing_key=queue)
       for queue in scheduler.conf.queues]
     self.connection = kombu.Connection(conf.get('broker.url'))
+    self.serializer = conf.get('broker.serializer', 'pickle')
+    # note: disabling compression for PY3 since kombu 2.5.10 fails
+    #       with pickle+bzip2...
+    # todo: remove this workaround when kombu is fixed...
+    self.compressor = conf.get('broker.compressor', None if six.PY3 else 'bzip2')
 
   #----------------------------------------------------------------------------
   def send(self, message, queue=None):
-    if isinstance(message, basestring):
+    if isinstance(message, six.string_types):
       message = api.Event('message', message=message)
     if not isinstance(message, api.Event):
       raise api.InvalidMessage('broker messages must be instances of'
@@ -75,7 +82,10 @@ class Engine(object):
       try:
         log.debug('acquiring event consumer')
         with kombu.pools.connections[self.connection].acquire(block=True) as conn:
-          KombuWorker(self, conn).run()
+          try:
+            KombuWorker(self, conn).run()
+          except Exception:
+            log.exception('scheduler event consumer failed during connection handling')
       except Exception:
         log.exception('scheduler event consumer failed to acquire/listen to a connection')
         time.sleep(5)
@@ -93,12 +103,12 @@ class Engine(object):
       kombu.common.maybe_declare(self.exchange, producer.channel)
       producer.publish(
         payload,
-        serializer   = 'pickle',
-        compression  = 'bzip2',
+        serializer   = self.serializer,
+        compression  = self.compressor,
         exchange     = self.exchange,
         routing_key  = queue,
         declare      = self.queues,
-        )
+      )
 
 #------------------------------------------------------------------------------
 # end of $Id$
