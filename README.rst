@@ -187,6 +187,8 @@ TODO: add documentation
 * scheduler.combined
 * scheduler.queues
 * scheduler.broker.url
+* scheduler.broker.serializer
+* scheduler.broker.compressor
 * scheduler.housekeeping
 * scheduler.housekeeping.append
 * scheduler.jobstore.default.class
