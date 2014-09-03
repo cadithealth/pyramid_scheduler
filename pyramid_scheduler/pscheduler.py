@@ -149,7 +149,7 @@ def main():
     app.registry.scheduler.startConsumer(daemon=True, queues=options.queues)
     register_for_graceful_shutdown(app)
     wait_for_exit()
-  except KeyboardInterrupt, SystemExit:
+  except (KeyboardInterrupt, SystemExit):
     return 0
   except Exception:
     log.exception('error while starting pscheduler')
@@ -162,7 +162,7 @@ def wait_for_exit():
   while True:
     try:
       time.sleep(86400)
-    except KeyboardInterrupt, SystemExit:
+    except (KeyboardInterrupt, SystemExit):
       return
 
 #------------------------------------------------------------------------------
