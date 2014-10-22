@@ -255,6 +255,7 @@ class Scheduler(object):
     # refuses to run it with "ValueError('Not adding job since it
     # would never be run')" -- so the _getdt() calls are to work around
     # that...
+    print job.id
     params = job.options
     if 'start_date' in params:
       params.start_date = self._getdt(params.start_date, asStart=True, grace=params.misfire_grace_time)
@@ -289,10 +290,17 @@ class Scheduler(object):
     if not job.id:
       log.error('received request to cancel unidentified job: %r', job)
       return
-    jobs = [j for j in self.aps.get_jobs() if j.id == job.id]
+    #jobs = [j for j in self.aps.get_jobs() if j.id == job.id]
+    jobs = [j for j in self.aps.get_jobs() if len(j.args) > 1 and j.args[1] == job.id]
+    #jobs = []
+    #for j in self.aps.get_jobs():
+    #  print j.args
+    #  print j.id
+    #  if len(j.args) > 1 and j.args[1] == job.id:
+    #    jobs.append(j)
     if not jobs:
       log.warning('received request to cancel unknown job: %r', job)
-      return
+      return -1
     for apsjob in jobs:
       self.aps.unschedule_job(apsjob)
       self._notify(api.Event(api.Event.JOB_CANCELED, job=apsjob))
@@ -452,7 +460,16 @@ class Scheduler(object):
     if queue and queue not in self.conf.queues:
       raise api.InvalidQueue(queue)
     event = api.Event(api.Event.JOB_CANCELED, job=adict(id=jobID))
-    self.broker.send(event, queue)
+    result = self.broker.send(event, queue)
+    return result
+
+  #----------------------------------------------------------------------------
+  def get_jobs(self):
+    '''
+    Retrieve all scheduled jobs from all queues.
+    '''
+    jobs = [j.__dict__ for j in self.aps.get_jobs()]
+    return jobs
 
 #------------------------------------------------------------------------------
 # end of $Id$

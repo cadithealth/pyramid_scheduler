@@ -69,6 +69,12 @@ Use:
   def handle_request_often(request):
     request.registry.scheduler.add_date_job(interval_process, minutes=10)
 
+Test:
+
+.. code-block:: bash
+
+  $ python setup.py test
+
 
 Concepts
 ========
@@ -187,6 +193,8 @@ TODO: add documentation
 * scheduler.combined
 * scheduler.queues
 * scheduler.broker.url
+* scheduler.broker.serializer
+* scheduler.broker.compressor
 * scheduler.housekeeping
 * scheduler.housekeeping.append
 * scheduler.jobstore.default.class
