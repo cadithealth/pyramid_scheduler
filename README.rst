@@ -75,6 +75,12 @@ Test:
 
   $ python setup.py test
 
+OR (recommended)
+
+.. code-block:: bash
+
+  $ nosetests
+
 
 Concepts
 ========
