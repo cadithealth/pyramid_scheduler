@@ -21,6 +21,12 @@ from kombu.transport.sqlalchemy.models import metadata, Queue, Message
 from pyramid.config import Configurator
 from pyramid.response import Response
 
+import sys
+
+import logging
+log = logging.getLogger(__name__)
+logging.basicConfig()
+
 #------------------------------------------------------------------------------
 storedData = []
 storedDataCond = threading.Condition()
@@ -28,6 +34,10 @@ def store_some_data(**data):
   with storedDataCond:
     storedData.append(data)
     storedDataCond.notify()
+
+#------------------------------------------------------------------------------
+def execute_some_func(**data):
+  return True
 
 #------------------------------------------------------------------------------
 def ReflectorApp(settings={}):
@@ -39,10 +49,35 @@ def ReflectorApp(settings={}):
     request.registry.scheduler.add_date_job(
       store_some_data, time.time() + 0.5, kwargs=dict(request.params))
     return Response('ok')
+  def interval_store_params(request):
+    job_id = request.registry.scheduler.add_interval_job(
+      execute_some_func, minutes=1, kwargs=dict(request.params))
+    #return Response('ok')
+    return Response(str(job_id))
+  def cancel_store_params(request):
+    job_id = request.params.get('val')
+    request.registry.scheduler.cancel_job(job_id)
+    return Response('ok')
+  def get_stored_jobs(request):
+    jobs = request.registry.scheduler.get_jobs()
+    clean_jobs = []
+    for job in jobs:
+        job.pop('_lock', "")
+        job.pop('next_run_time', "")
+        job.pop('trigger', "")
+        job['func'] = str(job['func'])
+        clean_jobs.append(job)
+    return Response(json.dumps(clean_jobs))
   config.add_route('reflect', '/reflect/*path')
   config.add_view(reflect_params, route_name='reflect')
   config.add_route('deferred', '/store/*path')
   config.add_view(deferred_store_params, route_name='deferred')
+  config.add_route('interval', '/execute/*path')
+  config.add_view(interval_store_params, route_name='interval')
+  config.add_route('get', '/return/*path')
+  config.add_view(get_stored_jobs, route_name='get')
+  config.add_route('cancel', '/cancel/*path')
+  config.add_view(cancel_store_params, route_name='cancel')
   return config.make_wsgi_app()
 
 #------------------------------------------------------------------------------
@@ -74,7 +109,11 @@ class TestScheduler(unittest.TestCase):
   #----------------------------------------------------------------------------
   @classmethod
   def tearDownClass(klass):
-    os.unlink(klass.masterdb_path)
+    try:
+        os.unlink(klass.masterdb_path)
+        sys.exit()
+    except:
+        pass
 
   #----------------------------------------------------------------------------
   def setUp(self):
@@ -98,10 +137,14 @@ class TestScheduler(unittest.TestCase):
     appset.update(settings or {})
     self.app     = ReflectorApp(settings=appset)
     self.testapp = webtest.TestApp(self.app)
+    storedData = []
 
   #----------------------------------------------------------------------------
   def tearDown(self):
-    os.unlink(self.dbpath)
+    try:
+        os.unlink(self.dbpath)
+    except:
+        pass
 
   #----------------------------------------------------------------------------
   def test_testapp(self):
@@ -123,6 +166,32 @@ class TestScheduler(unittest.TestCase):
       if not storedData:
         storedDataCond.wait(timeout=3)
       self.assertEqual(storedData, [{'val': val}])
+
+  #----------------------------------------------------------------------------
+  def test_scheduler_cancel_job(self):
+    self.initApp()
+    # Start and verify only housekeeping job is currently in the queue
+    resp = self.testapp.get('/return/?val=')
+    jobs = json.loads(resp.body)
+    self.assertEquals(len(jobs), 1)
+    self.assertEquals(jobs[0]['name'], 'housekeeping')
+    val = str(uuid.uuid4())
+    # Add new scheduled job to the queue
+    res = self.testapp.get('/execute/?val=' + val)
+    job_id = res.body
+    time.sleep(2)
+    # Verify new scheduled job is added to the queue
+    resp = self.testapp.get('/return/?val=')
+    jobs = json.loads(resp.body)
+    self.assertEquals(len(jobs), 2)
+    # Cancel the new scheduled job
+    resp = self.testapp.get('/cancel/?val='+job_id)
+    time.sleep(2)
+    # Verify only housekeeping job is currently in the queue
+    resp = self.testapp.get('/return/?val=' + val)
+    jobs = json.loads(resp.body)
+    self.assertEquals(len(jobs), 1)
+    self.assertEquals(jobs[0]['name'], 'housekeeping')
 
 #------------------------------------------------------------------------------
 # end of $Id$
