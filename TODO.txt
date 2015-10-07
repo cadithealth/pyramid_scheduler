@@ -8,3 +8,16 @@
   * do a round-trip test of the callback handler to ensure that it is loadable
   * do not silently drop jobs...
   * check that all datetime objects are 'naive'... can they be auto-corrected?...
+* make the Job table by default also have the "unwrapped" function name in the
+  columns (so that the extra "job_type" added in cadit/canary is not needed)
+* "cron" style jobs...
+  * document it better
+  * figure out how to make it (optionally) UTC based?
+
+* BUG: getting this in the pscheduler log files:
+
+@40000000547d2b4b1e478c7c Traceback (most recent call last):
+@40000000547d2b4b1e479064   File "/usr/lib/python2.7/threading.py", line 551, in __bootstrap_inner
+@40000000547d2b4b1e479064   File "/usr/lib/python2.7/threading.py", line 504, in run
+@40000000547d2b4b1e479064   File "/var/virtualenv/local/lib/python2.7/site-packages/apscheduler/scheduler.py", line 577, in _main_loop
+@40000000547d2b4b1e47944c <type 'exceptions.AttributeError'>: 'NoneType' object has no attribute 'debug'
