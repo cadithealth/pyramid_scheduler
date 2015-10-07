@@ -3,6 +3,19 @@ ChangeLog
 =========
 
 
+v0.3.2
+======
+
+* Removed `distribute` dependency
+
+
+v0.3.1
+======
+
+* Fix for Python 3 support
+  (thanks to github.com/farvour -- issue #7)
+
+
 v0.3.0
 ======
 
