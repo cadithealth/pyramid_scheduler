@@ -435,9 +435,9 @@ class Scheduler(object):
           func    = obj_to_ref(func),
           args    = args,
           kwargs  = kwargs,
-          )
         )
       )
+    )
     self.broker.send(event, queue)
     return event.job.id
 
