@@ -27,8 +27,7 @@ test_dependencies = [
 ]
 
 dependencies = [
-  'pyramid              >= 1.4',
-  'distribute           >= 0.6.24',
+  'pyramid              >= 1.4.2',
   'APScheduler          >= 2.1.0',
   'kombu                >= 2.5.10',
   'transaction          >= 1.4.1',
