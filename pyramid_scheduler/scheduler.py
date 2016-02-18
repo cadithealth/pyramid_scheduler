@@ -11,10 +11,12 @@
 The pyramid-scheduler scheduling service.
 '''
 
-import time
 import datetime
 import logging
 import threading
+import sys
+import traceback
+import smtplib
 from contextlib import contextmanager
 
 import transaction
@@ -80,6 +82,32 @@ class Scheduler(object):
     self.broker = broker.Engine(self, conf)
     self.registry[self.id] = self
 
+  def setMailConf(self, mail_conf):
+    self.mail_conf = mail_conf
+
+  def sendErrorMail(self, traceback):
+        smtp = smtplib.SMTP(self.mail_conf['host'], self.mail_conf['port'])
+        date = datetime.datetime.now().strftime('%d/%m/%Y %H:%m')
+        subject = 'JOB ERROR on %s' % self.mail_conf['server']
+        msg = 'Error %s' % (traceback)
+        username = self.mail_conf['username']
+        if username:
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.ehlo()
+            smtp.login(username, self.mail_conf['password'])
+        else:
+          username = self.mail_conf['from']
+
+        msg = "From: %s\r\nTo: %s\r\nSubject: %s\r\nDate: %s\r\n\r\n%s" % (
+            username,
+            self.mail_conf['to'],
+            subject,
+            date,
+            msg)
+
+        smtp.sendmail(username, self.mail_conf['to'], msg)
+        smtp.quit()
   #----------------------------------------------------------------------------
   def startProducer(self):
     '''
@@ -332,7 +360,18 @@ class Scheduler(object):
       # TODO: ensure proper transaction handling
       with transaction.manager:
         func = ref_to_obj(task.func)
-        func(*task.args or [], **task.kwargs or {})
+        try:
+          func(*task.args or [], **task.kwargs or {})
+        except Exception as e:
+          exc_type, exc_value, exc_traceback = sys.exc_info()
+          _traceback = traceback.format_exc()
+          if hasattr(self, 'mail_conf'):
+            self.sendErrorMail(_traceback)
+
+            log.error('job ID "%s" (func : %s) failed : %s',
+                      jobID, task.func, e)
+          else:
+            raise Exception(e)
 
   #----------------------------------------------------------------------------
   def _housekeeping(self):

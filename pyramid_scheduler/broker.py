@@ -51,12 +51,28 @@ class Engine(object):
       kombu.Queue(queue, exchange=self.exchange, routing_key=queue)
       for queue in scheduler.conf.queues]
     self.connection = kombu.Connection(conf.get('broker.url'))
+
+    mail_host = conf.get('mail.host')
+    if mail_host is not None:
+      mail_conf = self.getMailConf(conf)
+      self.scheduler.setMailConf(mail_conf)
+      log.info('Scheduler : Error email ok')
     self.serializer = conf.get('broker.serializer', 'pickle')
     # note: disabling compression for PY3 since kombu 2.5.10 fails
     #       with pickle+bzip2...
     # todo: remove this workaround when kombu is fixed...
     self.compressor = conf.get('broker.compressor', None if six.PY3 else 'bzip2')
 
+  def getMailConf(self, conf):
+      mail = {}
+      mail['host'] = conf.get('mail.host') #Mandatory
+      mail['username'] = conf.get('mail.username') #Optionnal
+      mail['password'] = conf.get('mail.password') #Optionnal
+      mail['port'] = conf.get('mail.port') #Optionnal
+      mail['from'] = conf.get('mail.from') #Optionnal
+      mail['to'] = conf.get('mail.to') #Mandatory
+      mail['server'] = conf.get('mail.server', 'local')
+      return mail
   #----------------------------------------------------------------------------
   def send(self, message, queue=None):
     if isinstance(message, six.string_types):
