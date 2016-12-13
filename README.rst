@@ -96,8 +96,8 @@ to be managed as "jobs" and these fall into the following categories:
 
 Conceptually, there are two activities: the activity of creating the
 jobs and the activity of executing the jobs. These can be performed by
-the same process (with "combined" mode enabled), or they can be
-performed by different processes (with "combined" mode disabled).
+the same process (with "scheduler.combined=true"), or they can be
+performed by different processes (with "scheduler.combined=false").
 
 If there are multiple processes that are creating jobs (for example,
 if your are running multiple servers or your WSGI configuration uses
