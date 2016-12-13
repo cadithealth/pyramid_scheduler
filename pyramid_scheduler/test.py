@@ -87,6 +87,10 @@ class TestScheduler(unittest.TestCase):
     shutil.copyfile(self.masterdb_path, self.dbpath)
 
   #----------------------------------------------------------------------------
+  def tearDown(self):
+    os.unlink(self.dbpath)
+
+  #----------------------------------------------------------------------------
   def initApp(self, **settings):
     appset = {
       'sqlalchemy.url'        : self.dburl,
@@ -98,10 +102,6 @@ class TestScheduler(unittest.TestCase):
     appset.update(settings or {})
     self.app     = ReflectorApp(settings=appset)
     self.testapp = webtest.TestApp(self.app)
-
-  #----------------------------------------------------------------------------
-  def tearDown(self):
-    os.unlink(self.dbpath)
 
   #----------------------------------------------------------------------------
   def test_testapp(self):
