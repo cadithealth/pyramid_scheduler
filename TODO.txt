@@ -1,3 +1,25 @@
+* add new Events:
+  - SCHEDULER_(STARTING|STARTED|STOPPING|STOPPED)
+  - PRODUCER_(STARTING|STARTED|STOPPING|STOPPED)
+  - CONSUMER_(STARTING|STARTED|STOPPING|STOPPED)
+  ==> this would allow systems that need to ONLY run in the consumer
+  to be started...
+
+* create a pscheduler-install script:
+
+  $ pscheduler-install \
+      --service /etc/service/my-app-scheduler \
+      --user www-data \
+      --path /path/to/virtualenv/bin/pscheduler \
+      --log /var/log/pscheduler-my-app \
+      --log-max 1GB \
+      --log-count 10 \
+      --env {KEY}={VALUE} \
+      /path/to/config.ini
+
+   - check that 'multilog' and 'setuigid' are in PATH
+   - maybe wait a second and ensure that both 'supervise' directories show up?
+
 * generate API documentation with sphinx
 * if pyramid_exclog is installed, make use of it
 * make the sqlalchemy kombu driver clean up old messages
