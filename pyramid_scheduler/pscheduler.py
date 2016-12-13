@@ -13,10 +13,19 @@ actually executing the asynchronous and/or deferred tasks in
 non-combined mode.
 '''
 
-import os, sys, subprocess, time, argparse, logging, threading
+import os
+import sys
+import subprocess
+import time
+import argparse
+import logging
+import threading
 import transaction
+
 from pyramid.scripts.pserve import install_reloader, _turn_sigterm_into_systemexit
 from pyramid.paster import setup_logging, get_app
+
+#------------------------------------------------------------------------------
 
 log = None # logging.getLogger(__name__)
 
