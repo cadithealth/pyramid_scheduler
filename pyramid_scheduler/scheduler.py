@@ -454,6 +454,8 @@ class Scheduler(object):
     event = api.Event(api.Event.JOB_CANCELED, job=adict(id=jobID))
     self.broker.send(event, queue)
 
+
 #------------------------------------------------------------------------------
 # end of $Id$
+# $ChangeLog$
 #------------------------------------------------------------------------------

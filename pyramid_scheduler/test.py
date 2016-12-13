@@ -124,6 +124,8 @@ class TestScheduler(unittest.TestCase):
         storedDataCond.wait(timeout=3)
       self.assertEqual(storedData, [{'val': val}])
 
+
 #------------------------------------------------------------------------------
 # end of $Id$
+# $ChangeLog$
 #------------------------------------------------------------------------------
