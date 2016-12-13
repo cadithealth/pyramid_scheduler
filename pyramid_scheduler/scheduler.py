@@ -11,13 +11,20 @@
 The pyramid-scheduler scheduling service.
 '''
 
-import time, datetime, logging
-import transaction
+import time
+import datetime
+import logging
+import threading
 from contextlib import contextmanager
-import apscheduler, apscheduler.scheduler, apscheduler.events
+
+import transaction
+import apscheduler
+import apscheduler.scheduler
+import apscheduler.events
 from pyramid.settings import asbool, aslist
 from apscheduler.jobstores.ram_store import RAMJobStore
 from apscheduler.util import combine_opts, ref_to_obj, obj_to_ref
+
 from .util import adict, asdur, addPrefix, makeID, cull, now, ts2dt, dt2ts, resolve
 from . import api, broker
 
@@ -259,9 +266,13 @@ class Scheduler(object):
     if 'start_date' in params:
       params.start_date = self._getdt(params.start_date, asStart=True, grace=params.misfire_grace_time)
     if job.type == 'async':
-      self.aps.add_date_job(
-        pyramid_scheduler_wrapper,
-        ts2dt(now() + self.TIMEPAD), args=(self.id, job.id, job.task), **params)
+      # todo: make this thread's profile match the ones created by APScheduler...
+      thread = threading.Thread(
+        target = pyramid_scheduler_wrapper,
+        args   = (self.id, job.id, job.task),
+      )
+      thread.daemon = True
+      thread.start()
       return
     if job.type == 'date':
       params.date = self._getdt(params.date, asStart=True, grace=params.misfire_grace_time)
