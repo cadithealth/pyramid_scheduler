@@ -3,6 +3,13 @@ ChangeLog
 =========
 
 
+v0.3.3
+======
+
+* Improved "async" jobs to run immediately instead of relying on
+  APScheduler (thus improving time-to-execution)
+
+
 v0.3.2
 ======
 
