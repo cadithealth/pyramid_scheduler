@@ -3,6 +3,13 @@ ChangeLog
 =========
 
 
+v0.3.4
+======
+
+* Added support for alternate specification of job execution via
+  `scheduler.delegator` config
+
+
 v0.3.3
 ======
 
