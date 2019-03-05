@@ -47,6 +47,8 @@ class Scheduler(object):
   #: `date` job that is scheduled for now does not get refused. this
   #: is to work around an APS "peculiarity" that does not allow a job
   #: to be scheduled for now, as in *right* *now*...
+  # TODO: this should be re-implemented to auto-convert to an `async`
+  #       job instead...
   TIMEPAD = 0.01
 
   #: if no queue names are specified, `DEFAULT_QUEUE` is the name
@@ -411,6 +413,9 @@ class Scheduler(object):
     str
       The identifier for the job.
     '''
+    # todo: this method of resolving weeks/days/hours/minutes to
+    #       seconds loses the ability to account for DST, leap-days,
+    #       leap-seconds, etc. FIX!
     seconds += ( weeks * 604800 ) + ( days * 86400 ) + ( hours * 3600 ) + ( minutes * 60 )
     return self._add(func, args, kwargs, queue, 'interval',
                      cull(**adict(start_date=start_date, seconds=seconds).update(options)))

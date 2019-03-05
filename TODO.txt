@@ -1,3 +1,33 @@
+* add support for::
+
+    scheduler.add_cron_job(
+      'import app ; app.get_singleton.run_method',
+      ...
+    )
+
+  whose result should provide a callable. this to work around the fact
+  that APS requires a global function... and maybe even declare
+  centrally the set of values that should be in-scope... eg::
+
+    schedule = Scheduler(eval_context=dict(
+      MyGlobalApp1 = self,
+      MyGlobalApp2 = lambda: get_my_global_app_2(),
+    ))
+
+  which would then allow::
+
+    scheduler.add_cron_job(
+      'MyGlobalApp.run_method',
+      ...
+    )
+
+  or something similar
+
+* perhaps catch APScheduler error:
+    ValueError: Not adding job since it would never be run
+  and, if within some "reasonable time" (configurable?), then run it *now*...
+  (then delete all the TIMEPAD garbage)
+
 * add new Events:
   - SCHEDULER_(STARTING|STARTED|STOPPING|STOPPED)
   - PRODUCER_(STARTING|STARTED|STOPPING|STOPPED)
