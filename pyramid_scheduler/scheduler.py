@@ -74,6 +74,7 @@ class Scheduler(object):
     self.conf.hkpostcall   = resolve(conf.get('housekeeping.append', None))
     self.conf.queues       = aslist(conf.get('queues', ''))
     self.conf.grace        = int(conf.get('misfire_grace_time', 1))
+    self.conf.delegator    = resolve(conf.get('delegator', None))
     self.id                = conf.get('id', ';'.join(self.conf.queues))
     if len(self.conf.queues) <= 0:
       self.conf.queues = [self.DEFAULT_QUEUE]
@@ -328,10 +329,13 @@ class Scheduler(object):
 
   #----------------------------------------------------------------------------
   def _runJob(self, jobID, task):
+    func = ref_to_obj(task.func)
+    if self.conf.delegator:
+      if self.conf.delegator(func, args=task.args, kwargs=task.kwargs):
+        return
     with self._threadContext():
       # TODO: ensure proper transaction handling
       with transaction.manager:
-        func = ref_to_obj(task.func)
         func(*task.args or [], **task.kwargs or {})
 
   #----------------------------------------------------------------------------
