@@ -3,6 +3,33 @@ ChangeLog
 =========
 
 
+v0.3.4
+======
+
+* Added support for alternate specification of job execution via
+  `scheduler.delegator` config
+
+
+v0.3.3
+======
+
+* Improved "async" jobs to run immediately instead of relying on
+  APScheduler (thus improving time-to-execution)
+
+
+v0.3.2
+======
+
+* Removed `distribute` dependency
+
+
+v0.3.1
+======
+
+* Fix for Python 3 support
+  (thanks to github.com/farvour -- issue #7)
+
+
 v0.3.0
 ======
 

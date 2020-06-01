@@ -11,13 +11,20 @@
 The pyramid-scheduler scheduling service.
 '''
 
-import time, datetime, logging
-import transaction
+import time
+import datetime
+import logging
+import threading
 from contextlib import contextmanager
-import apscheduler, apscheduler.scheduler, apscheduler.events
+
+import transaction
+import apscheduler
+import apscheduler.scheduler
+import apscheduler.events
 from pyramid.settings import asbool, aslist
 from apscheduler.jobstores.ram_store import RAMJobStore
 from apscheduler.util import combine_opts, ref_to_obj, obj_to_ref
+
 from .util import adict, asdur, addPrefix, makeID, cull, now, ts2dt, dt2ts, resolve
 from . import api, broker
 
@@ -40,6 +47,8 @@ class Scheduler(object):
   #: `date` job that is scheduled for now does not get refused. this
   #: is to work around an APS "peculiarity" that does not allow a job
   #: to be scheduled for now, as in *right* *now*...
+  # TODO: this should be re-implemented to auto-convert to an `async`
+  #       job instead...
   TIMEPAD = 0.01
 
   #: if no queue names are specified, `DEFAULT_QUEUE` is the name
@@ -67,6 +76,7 @@ class Scheduler(object):
     self.conf.hkpostcall   = resolve(conf.get('housekeeping.append', None))
     self.conf.queues       = aslist(conf.get('queues', ''))
     self.conf.grace        = int(conf.get('misfire_grace_time', 1))
+    self.conf.delegator    = resolve(conf.get('delegator', None))
     self.id                = conf.get('id', ';'.join(self.conf.queues))
     if len(self.conf.queues) <= 0:
       self.conf.queues = [self.DEFAULT_QUEUE]
@@ -259,9 +269,13 @@ class Scheduler(object):
     if 'start_date' in params:
       params.start_date = self._getdt(params.start_date, asStart=True, grace=params.misfire_grace_time)
     if job.type == 'async':
-      self.aps.add_date_job(
-        pyramid_scheduler_wrapper,
-        ts2dt(now() + self.TIMEPAD), args=(self.id, job.id, job.task), **params)
+      # todo: make this thread's profile match the ones created by APScheduler...
+      thread = threading.Thread(
+        target = pyramid_scheduler_wrapper,
+        args   = (self.id, job.id, job.task),
+      )
+      thread.daemon = True
+      thread.start()
       return
     if job.type == 'date':
       params.date = self._getdt(params.date, asStart=True, grace=params.misfire_grace_time)
@@ -317,10 +331,13 @@ class Scheduler(object):
 
   #----------------------------------------------------------------------------
   def _runJob(self, jobID, task):
+    func = ref_to_obj(task.func)
+    if self.conf.delegator:
+      if self.conf.delegator(func, args=task.args, kwargs=task.kwargs):
+        return
     with self._threadContext():
       # TODO: ensure proper transaction handling
       with transaction.manager:
-        func = ref_to_obj(task.func)
         func(*task.args or [], **task.kwargs or {})
 
   #----------------------------------------------------------------------------
@@ -396,6 +413,9 @@ class Scheduler(object):
     str
       The identifier for the job.
     '''
+    # todo: this method of resolving weeks/days/hours/minutes to
+    #       seconds loses the ability to account for DST, leap-days,
+    #       leap-seconds, etc. FIX!
     seconds += ( weeks * 604800 ) + ( days * 86400 ) + ( hours * 3600 ) + ( minutes * 60 )
     return self._add(func, args, kwargs, queue, 'interval',
                      cull(**adict(start_date=start_date, seconds=seconds).update(options)))
@@ -435,9 +455,9 @@ class Scheduler(object):
           func    = obj_to_ref(func),
           args    = args,
           kwargs  = kwargs,
-          )
         )
       )
+    )
     self.broker.send(event, queue)
     return event.job.id
 
@@ -464,4 +484,5 @@ class Scheduler(object):
 
 #------------------------------------------------------------------------------
 # end of $Id$
+# $ChangeLog$
 #------------------------------------------------------------------------------

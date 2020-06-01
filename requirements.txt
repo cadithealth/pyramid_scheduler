@@ -1,0 +1,7 @@
+pyramid                 >= 1.4.2
+APScheduler             >= 2.1.0
+kombu                   >= 2.5.10
+
+## some old stuff here:
+transaction             >= 1.4.1
+six                     >= 1.6.1

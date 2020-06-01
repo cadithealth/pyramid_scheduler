@@ -13,10 +13,19 @@ actually executing the asynchronous and/or deferred tasks in
 non-combined mode.
 '''
 
-import os, sys, subprocess, time, argparse, logging, threading
+import os
+import sys
+import subprocess
+import time
+import argparse
+import logging
+import threading
 import transaction
+
 from pyramid.scripts.pserve import install_reloader, _turn_sigterm_into_systemexit
 from pyramid.paster import setup_logging, get_app
+
+#------------------------------------------------------------------------------
 
 log = None # logging.getLogger(__name__)
 
@@ -149,7 +158,7 @@ def main():
     app.registry.scheduler.startConsumer(daemon=True, queues=options.queues)
     register_for_graceful_shutdown(app)
     wait_for_exit()
-  except KeyboardInterrupt, SystemExit:
+  except (KeyboardInterrupt, SystemExit):
     return 0
   except Exception:
     log.exception('error while starting pscheduler')
@@ -162,7 +171,7 @@ def wait_for_exit():
   while True:
     try:
       time.sleep(86400)
-    except KeyboardInterrupt, SystemExit:
+    except (KeyboardInterrupt, SystemExit):
       return
 
 #------------------------------------------------------------------------------
@@ -182,4 +191,5 @@ def register_for_graceful_shutdown(app):
 
 #------------------------------------------------------------------------------
 # end of $Id$
+# $ChangeLog$
 #------------------------------------------------------------------------------

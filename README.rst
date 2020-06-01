@@ -44,25 +44,25 @@ Use:
   #   ##   scheduler.housekeeping.append
   #   ##   scheduler.jobstore.default.class
   #   ##   scheduler.misfire_grace_time
-  
+
   # enabling the plugin adds a `scheduler` attribute to the registry
   def main(global_config, **settings):
     # ... (the usual pyramid startup calls) ...
     config.include('pyramid_scheduler)
-  
+
   # create an asynchronous task
   def slow_process(name, id):
     # ...a slow asynchronous job...
   def handle_request_quickly(request):
     request.registry.scheduler.add_async_job(slow_process, args=('my-first-arg', 2))
-  
+
   # schedule a deferred task for one hour from now
   def delayed_process():
     # ...something that should happen later...
   def handle_request_now(request):
     import time
     request.registry.scheduler.add_date_job(delayed_process, time.time() + 3600)
-  
+
   # do something every 10 minutes
   def interval_process(reason=None):
     # ...gets executed every 10 minutes with an optional reason...
@@ -108,8 +108,8 @@ to be managed as "jobs" and these fall into the following categories:
 
 Conceptually, there are two activities: the activity of creating the
 jobs and the activity of executing the jobs. These can be performed by
-the same process (with "combined" mode enabled), or they can be
-performed by different processes (with "combined" mode disabled).
+the same process (with "scheduler.combined=true"), or they can be
+performed by different processes (with "scheduler.combined=false").
 
 If there are multiple processes that are creating jobs (for example,
 if your are running multiple servers or your WSGI configuration uses
@@ -198,6 +198,7 @@ TODO: add documentation
 
 * scheduler.combined
 * scheduler.queues
+* scheduler.delegator
 * scheduler.broker.url
 * scheduler.broker.serializer
 * scheduler.broker.compressor
@@ -207,12 +208,132 @@ TODO: add documentation
 * scheduler.misfire_grace_time
 
 
-Background Daemon
-=================
+Debugging
+=========
+
+The first step in debugging a pyramid-scheduler instance is to elevate
+the logging, and that is easiest via the application
+configuration. Here, an example that increases logging to DEBUG level
+and sends the logs to STDERR:
+
+.. code-block:: ini
+
+   [loggers]
+   keys               = scheduler, ...
+
+   [handlers]
+   keys               = console, ...
+
+   [formatters]
+   keys               = generic, ...
+
+   [logger_scheduler]
+   level              = DEBUG
+   handlers           = console
+   qualname           = pyramid_scheduler
+
+   [handler_console]
+   class              = StreamHandler
+   args               = (sys.stderr,)
+   level              = NOTSET
+   formatter          = generic
+
+   [formatter_generic]
+   format             = %(levelname)-5.5s [%(name)s] %(message)s
+
+
+If that does not expose the source of the problem, you can take some
+of the following actions:
+
+Confirm Communication
+---------------------
+
+You can confirm that the task producers and consumers are
+communicating by sending a ``print-jobs`` message. First, check
+the configurations by sending the message from a fake producer
+by using the ``pscheduler --message`` feature as follows:
+
+.. code-block:: bash
+
+   $ pscheduler --message 'print-jobs' {CONFIG}.ini
+
+   DEBUG [pyramid_scheduler.pscheduler] loading application from "{CONFIG}.ini"
+   DEBUG [pyramid_scheduler.broker] sending message <pyramid_scheduler.api.Event message={'message': 'print-jobs'}> to messenger
+
+and you should see something like this in the pscheduler daemon logs
+(depending on what happens to STDOUT, you may only see the DEBUG
+messages, not the actual Jobstore messages):
+
+.. code-block:: text
+
+  DEBUG [pyramid_scheduler.broker] received message: <pyramid_scheduler.api.Event message={'message': 'print-jobs'}>
+  DEBUG [pyramid_scheduler.scheduler] received message event: print-jobs
+  Jobstore default:
+      pyramid_scheduler_wrapper (trigger: cron[hour='0', minute='5'], next run at: 2014-12-03 00:05:00)
+  Jobstore internal.transient.8524480f-26b4-4a69-8bcd-3bb180d0cf9e:
+      housekeeping (trigger: interval[1 day, 0:00:00], next run at: 2014-12-03 14:45:26.696818)
+
+If that does not work, you need to check the application
+configurations, both on the consumer and producer sides. You may also
+need to debug the Kombu_ sub-system.
 
 TODO: add documentation
+
+
+Task Execution Process
+======================
+
+There are several ways that the tasks in a queue can actually be
+executed. The preferred way, described here, is to use the
+`pscheduler` script which is intended to be run in daemon mode by a
+daemon-running service, such as DJB's daemontools_ package.
+
+Install daemontools (adjust for your package manager):
+
+.. code-block:: bash
+
+  $ apt-get install daemontools
+
+This should install & start the `svscan` monitoring against the
+``/etc/service`` directory. You can do a `ps` to confirm this, and if
+it is not running, read the daemontools docs. If it is scanning a
+directory other than ``/etc/service``, adjust the following examples
+appropriately.
+
+Create & configure the logging subsystem by creating the following
+file in ``/etc/service/pscheduler/log/run`` (where ``pscheduler`` can
+be whatever you want). This example will store up to 100MiB of logs
+in the ``/var/log/pscheduler`` directory:
+
+.. code-block:: text
+
+  #!/bin/sh
+  exec multilog t s10485760 n10 /var/log/pscheduler
+
+Create & configure the `pscheduler` service by creating the following
+file in ``/etc/service/pscheduler/run`` (where ``pscheduler`` can be
+whatever you want). This example will run `pscheduler` as the
+``www-data`` user (it is simplest if it runs as the same user as the
+appserver that is producing pyramid-scheduler tasks):
+
+.. code-block:: text
+
+  #!/bin/sh
+  exec env -i PATH="/bin:/usr/bin:$PATH" \
+  setuidgid www-data \
+  /path/to/virtualenv/bin/pscheduler \
+    /path/to/config.ini \
+  2>&1
+
+And ensure that both files are executable:
+
+.. code-block:: bash
+
+  $ chmod 755 /etc/service/pscheduler/log/run
+  $ chmod 755 /etc/service/pscheduler/run
 
 
 .. _APScheduler: https://pypi.python.org/pypi/APScheduler
 .. _Kombu: https://pypi.python.org/pypi/kombu
 .. _datetime: http://docs.python.org/2/library/datetime.html
+.. _daemontools: http://cr.yp.to/daemontools.html

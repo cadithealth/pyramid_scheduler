@@ -19,21 +19,11 @@ def read(*parts, **kw):
   try:    return open(os.path.join(heredir, *parts)).read()
   except: return kw.get('default', '')
 
-test_dependencies = [
-  'nose                 >= 1.3.0',
-  'coverage             >= 3.5.3',
-  'WebTest              >= 1.4.0',
-  'SQLAlchemy           >= 0.8.2',
-]
-
-dependencies = [
-  'pyramid              >= 1.4',
-  'distribute           >= 0.6.24',
-  'APScheduler          >= 2.1.0',
-  'kombu                >= 2.5.10',
-  'transaction          >= 1.4.1',
-  'six                  >= 1.6.1',
-]
+def reqs(*args, **kws):
+  return [
+    dep for dep in read(*args, **kws).strip().split('\n')
+    if dep and not dep.startswith('#')
+  ]
 
 entrypoints = {
   'console_scripts': [
@@ -72,8 +62,8 @@ setup(
   packages              = setuptools.find_packages(),
   include_package_data  = True,
   zip_safe              = True,
-  install_requires      = dependencies,
-  tests_require         = test_dependencies,
+  install_requires      = reqs('requirements.txt'),
+  tests_require         = reqs('test-requirements.txt'),
   test_suite            = 'pyramid_scheduler',
   entry_points          = entrypoints,
   license               = 'MIT (http://opensource.org/licenses/MIT)',
@@ -81,4 +71,5 @@ setup(
 
 #------------------------------------------------------------------------------
 # end of $Id$
+# $ChangeLog$
 #------------------------------------------------------------------------------
