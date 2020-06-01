@@ -303,7 +303,7 @@ class Scheduler(object):
     if not job.id:
       log.error('received request to cancel unidentified job: %r', job)
       return
-    jobs = [j for j in self.aps.get_jobs() if j.id == job.id]
+    jobs = [j for j in self.aps.get_jobs() if len(j.args) > 1 and j.args[1] == job.id]
     if not jobs:
       log.warning('received request to cancel unknown job: %r', job)
       return
@@ -474,6 +474,13 @@ class Scheduler(object):
     event = api.Event(api.Event.JOB_CANCELED, job=adict(id=jobID))
     self.broker.send(event, queue)
 
+  #----------------------------------------------------------------------------
+  def get_jobs(self):
+    '''
+    Retrieve all scheduled jobs from all queues.
+    '''
+    jobs = [j.__dict__ for j in self.aps.get_jobs()]
+    return jobs
 
 #------------------------------------------------------------------------------
 # end of $Id$
