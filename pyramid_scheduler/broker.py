@@ -53,7 +53,8 @@ class Engine(object):
     self.connection = kombu.Connection(conf.get('broker.url'))
 
     mail_host = conf.get('mail.host')
-    if mail_host is not None:
+    error_tracking = conf.get('error_tracking')
+    if error_tracking == 'mail' and mail_host:
       mail_conf = self.getMailConf(conf)
       self.scheduler.setMailConf(mail_conf)
       log.info('Scheduler : Error email ok')
