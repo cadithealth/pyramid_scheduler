@@ -60,8 +60,12 @@ class Engine(object):
       log.info('Scheduler : Error email ok')
 
     if error_tracking == 'sentry':
-      self.scheduler.setSentryConf(conf.get('dsn_sentry'))
-      log.info('Scheduler : Error sentry ok')
+      dsn_sentry = conf.get('dsn_sentry')
+      if dsn_sentry:
+        self.scheduler.setSentryConf(conf.get('dsn_sentry'))
+        log.info('Scheduler : Error sentry ok')
+      else:
+        log.info('Scheduler : Error sentry NOK: missing dsn_sentry')
 
     self.serializer = conf.get('broker.serializer', 'pickle')
     # note: disabling compression for PY3 since kombu 2.5.10 fails

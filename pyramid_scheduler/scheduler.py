@@ -18,8 +18,6 @@ import sys
 import traceback
 import smtplib
 from contextlib import contextmanager
-import sentry_sdk
-from sentry_sdk.integrations.pyramid import PyramidIntegration
 
 import transaction
 import apscheduler
@@ -88,8 +86,10 @@ class Scheduler(object):
     self.mail_conf = mail_conf
 
   def setSentryConf(self, sentry_dsn):
-    self.sentry_conf = True
-    sentry_sdk.init(
+    import sentry_sdk
+    from sentry_sdk.integrations.pyramid import PyramidIntegration
+
+    self.sentry_conf = sentry_sdk.init(
       dsn=sentry_dsn,
       integrations=[PyramidIntegration()]
     )
@@ -169,10 +169,16 @@ class Scheduler(object):
   #----------------------------------------------------------------------------
   def _apsError(self, event):
     def getJid(event):
-      try:    return event.job.id
-      except: return None
-    log.error('job ID "%s" failed', getJid(event),
-              exc_info=event.exception, extra=dict(job=event.job))
+      try:
+        return event.job.id
+      except:
+        return None
+
+    if hasattr(self, 'sentry_conf'):
+      if event.exception:
+        self.sentry_conf.capture_exception(event.exception)
+    else:
+      log.error('job ID "%s" failed', getJid(event), exc_info=event.exception, extra=dict(job=event.job))
     # todo: self._notify?
 
   #----------------------------------------------------------------------------
@@ -372,13 +378,11 @@ class Scheduler(object):
         try:
           func(*task.args or [], **task.kwargs or {})
         except Exception as e:
-          exc_type, exc_value, exc_traceback = sys.exc_info()
-          _traceback = traceback.format_exc()
-          log.error('job ID "%s" (func : %s) failed : %s', jobID, task.func, e)
           if hasattr(self, 'mail_conf'):
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            _traceback = traceback.format_exc()
+            log.error('job ID "%s" (func : %s) failed : %s', jobID, task.func, e)
             self.sendErrorMail(_traceback)
-          elif hasattr(self, 'sentry_conf'):
-              sentry_sdk.capture_exception(e)
           else:
             raise Exception(e)
 
