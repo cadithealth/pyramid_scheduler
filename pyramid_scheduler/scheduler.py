@@ -88,6 +88,7 @@ class Scheduler(object):
     self.mail_conf = mail_conf
 
   def setSentryConf(self, sentry_dsn):
+    self.sentry_conf = True
     sentry_sdk.init(
       dsn=sentry_dsn,
       integrations=[PyramidIntegration()]
@@ -373,11 +374,11 @@ class Scheduler(object):
         except Exception as e:
           exc_type, exc_value, exc_traceback = sys.exc_info()
           _traceback = traceback.format_exc()
+          log.error('job ID "%s" (func : %s) failed : %s', jobID, task.func, e)
           if hasattr(self, 'mail_conf'):
             self.sendErrorMail(_traceback)
-
-            log.error('job ID "%s" (func : %s) failed : %s',
-                      jobID, task.func, e)
+          elif hasattr(self, 'sentry_conf'):
+              sentry_sdk.capture_exception(e)
           else:
             raise Exception(e)
 
