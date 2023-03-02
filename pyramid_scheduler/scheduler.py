@@ -18,6 +18,8 @@ import sys
 import traceback
 import smtplib
 from contextlib import contextmanager
+import sentry_sdk
+from sentry_sdk.integrations.pyramid import PyramidIntegration
 
 import transaction
 import apscheduler
@@ -84,6 +86,12 @@ class Scheduler(object):
 
   def setMailConf(self, mail_conf):
     self.mail_conf = mail_conf
+
+  def setSentryConf(self, sentry_dsn):
+    sentry_sdk.init(
+      dsn=sentry_dsn,
+      integrations=[PyramidIntegration()]
+    )
 
   def sendErrorMail(self, traceback):
         smtp = smtplib.SMTP(self.mail_conf['host'], self.mail_conf['port'])
