@@ -17,6 +17,7 @@ import time, logging, threading
 import kombu, kombu.pools, kombu.common
 from kombu.mixins import ConsumerMixin
 import six
+import sentry_sdk
 
 from . import api
 from .util import adict
@@ -58,6 +59,12 @@ class Engine(object):
       mail_conf = self.getMailConf(conf)
       self.scheduler.setMailConf(mail_conf)
       log.info('Scheduler : Error email ok')
+
+    if error_tracking == 'sentry':
+      sentry_sdk.init(
+        dsn=conf.get('dsn_sentry'),
+        integrations=[PyramidIntegration()]
+      )
     self.serializer = conf.get('broker.serializer', 'pickle')
     # note: disabling compression for PY3 since kombu 2.5.10 fails
     #       with pickle+bzip2...
