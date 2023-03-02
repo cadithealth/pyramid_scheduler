@@ -19,6 +19,9 @@ import traceback
 import smtplib
 from contextlib import contextmanager
 
+import sentry_sdk
+from sentry_sdk.integrations.pyramid import PyramidIntegration
+
 import transaction
 import apscheduler
 import apscheduler.scheduler
@@ -86,10 +89,9 @@ class Scheduler(object):
     self.mail_conf = mail_conf
 
   def setSentryConf(self, sentry_dsn):
-    import sentry_sdk
-    from sentry_sdk.integrations.pyramid import PyramidIntegration
+    self.sentry_conf = True
 
-    self.sentry_conf = sentry_sdk.init(
+    sentry_sdk.init(
       dsn=sentry_dsn,
       integrations=[PyramidIntegration()]
     )
@@ -176,7 +178,7 @@ class Scheduler(object):
 
     if hasattr(self, 'sentry_conf'):
       if event.exception:
-        self.sentry_conf.capture_exception(event.exception)
+        sentry_sdk.capture_exception(event.exception)
     else:
       log.error('job ID "%s" failed', getJid(event), exc_info=event.exception, extra=dict(job=event.job))
     # todo: self._notify?
