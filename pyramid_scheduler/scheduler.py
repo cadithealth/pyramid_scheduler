@@ -89,12 +89,7 @@ class Scheduler(object):
     self.mail_conf = mail_conf
 
   def setSentryConf(self, sentry_dsn):
-    self.sentry_conf = True
-
-    sentry_sdk.init(
-      dsn=sentry_dsn,
-      integrations=[PyramidIntegration()]
-    )
+    self.sentry_dsn = sentry_dsn
 
   def sendErrorMail(self, traceback):
         smtp = smtplib.SMTP(self.mail_conf['host'], self.mail_conf['port'])
@@ -176,7 +171,11 @@ class Scheduler(object):
       except:
         return None
 
-    if hasattr(self, 'sentry_conf'):
+    if hasattr(self, 'sentry_dsn'):
+      sentry_sdk.init(
+        dsn=self.sentry_dsn,
+        integrations=[PyramidIntegration()]
+      )
       if event.exception:
         sentry_sdk.capture_exception(event.exception)
     else:
